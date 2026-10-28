@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Риск-сводка портфеля</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Syne:wght@600;700&display=swap&subset=cyrillic" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
+  <style>
+    :root {
+      --bg: #08090c;
+      --ink: #f3f6f8;
+      --muted: #909aa6;
+      --muted-soft: #6c7684;
+      --accent: #3dceb4;
+      --accent-soft: rgba(61, 206, 180, 0.12);
+      --accent-ring: rgba(61, 206, 180, 0.32);
+      --warn: #f47b7e;
+      --surface: rgba(255, 255, 255, 0.026);
+      --line: rgba(255, 255, 255, 0.09);
+      --max: 76rem;
+      --font-display: "Syne", "IBM Plex Sans", system-ui, sans-serif;
+      --font-body: "IBM Plex Sans", system-ui, sans-serif;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 1rem/1.6 var(--font-body);
+      overflow-x: clip;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(38% 50% at 12% 8%, rgba(61, 206, 180, 0.13), transparent 70%),
+        radial-gradient(30% 40% at 72% 0%, rgba(56, 130, 246, 0.09), transparent 70%),
+        radial-gradient(30% 45% at 95% 40%, rgba(168, 85, 247, 0.06), transparent 70%),
+        var(--bg);
+    }
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 46rem;
+      z-index: -1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(60% 90% at 20% 20%, #000 0%, transparent 75%);
+    }
+    main { max-width: var(--max); margin: 0 auto; padding: 4.5rem 1rem 5rem; }
+
+    .hero { margin-bottom: 3rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin: 0 0 1.25rem; padding: 0.3rem 0.8rem;
+      border: 1px solid var(--accent-ring); border-radius: 999px; background: var(--accent-soft);
+      color: var(--accent); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.01em;
+    }
+    .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2.4s ease-out infinite; }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(61, 206, 180, 0.5); }
+      70% { box-shadow: 0 0 0 7px rgba(61, 206, 180, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(61, 206, 180, 0); }
+    }
+    h1 {
+      margin: 0 0 1rem; max-width: 18ch;
+      font: 700 clamp(2.2rem, 5vw, 3.6rem)/1.05 var(--font-display);
+      letter-spacing: -0.02em;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(96deg, #a5f3fc 0%, #3dceb4 48%, #7dd3fc 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .lead { margin: 0; max-width: 46rem; color: var(--muted); font-size: 1.1rem; }
+
+    .block { margin-bottom: 1.25rem; }
+    .block-head { display: flex; align-items: baseline; gap: 1rem; margin: 0 0 1rem; }
+    .block-head .num { color: var(--accent); font: 600 0.85rem var(--font-display); letter-spacing: 0.08em; }
+    h2 { margin: 0; font: 600 1.35rem/1.2 var(--font-display); letter-spacing: -0.01em; }
+    .hint { margin: -0.5rem 0 1rem; color: var(--muted); font-size: 0.92rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      overflow-x: auto;
+      backdrop-filter: blur(6px);
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .grid > * { min-width: 0; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+    .findings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; counter-reset: f; }
+    @media (max-width: 900px) { .findings { grid-template-columns: 1fr; } }
+    .finding { position: relative; padding: 1.5rem; border-radius: 1.25rem; background: var(--surface); border: 1px solid var(--line); }
+    .finding::before {
+      counter-increment: f; content: "0" counter(f);
+      display: block; margin-bottom: 0.75rem;
+      color: var(--accent); font: 700 1.6rem var(--font-display);
+    }
+    .finding h3 { margin: 0 0 0.5rem; font: 600 1.05rem/1.35 var(--font-body); }
+    .finding p { margin: 0; color: var(--muted); font-size: 0.93rem; }
+    .finding b { color: var(--ink); font-weight: 500; }
+
+    footer { display: grid; gap: 0.5rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+    footer p { margin: 0; }
+    footer code { color: var(--ink); font-size: 0.95em; }
+
+    .reveal { opacity: 0; transform: translateY(1.5rem); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease); transition-delay: var(--delay, 0s); }
+    .reveal.is-visible { opacity: 1; transform: none; }
+    .hero > * { animation: textIn 1.2s var(--ease) both; }
+    .hero > :nth-child(2) { animation-delay: 0.08s; }
+    .hero > :nth-child(3) { animation-delay: 0.18s; }
+    @keyframes textIn { from { opacity: 0; transform: translateY(0.35rem); } to { opacity: 1; transform: none; } }
+
+    #vg-tooltip-element.vg-tooltip { font-family: var(--font-body); border-radius: 0.6rem; }
+
+    .scroll-top {
+      position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 40;
+      display: grid; place-items: center;
+      width: 2.75rem; height: 2.75rem; margin: 0; padding: 0;
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--bg) 82%, var(--accent));
+      color: var(--accent);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      opacity: 0; pointer-events: none; transform: translateY(0.5rem);
+      transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+    .scroll-top.is-visible { opacity: 1; pointer-events: auto; transform: none; }
+    .scroll-top:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .scroll-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .scroll-top svg { display: block; }
+
+    @media (max-width: 640px) {
+      main { padding: 2.5rem 1rem 4rem; }
+      .hero { margin-bottom: 2rem; }
+      .lead { font-size: 1rem; }
+      .block-head { gap: 0.6rem; }
+      h2 { font-size: 1.15rem; }
+      .card { padding: 1rem; border-radius: 1rem; }
+      .finding { padding: 1.25rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .hero > * { animation: none; }
+      .scroll-top { transition: none; }
+    }
+    .static .reveal { opacity: 1; transform: none; transition: none; }
+    .static .hero > * { animation: none; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <p class="eyebrow">Риск-комитет · срезы 01.09 и 01.10.2026</p>
+    <h1>Риск-сводка <em>кредитного портфеля</em></h1>
+    <p class="lead">Суммы в тенге по курсу на дату среза, без списанных кредитов. PAR30 и PAR90 — просрочка больше 30 и 90 дней, NPL — больше 90 дней или реструктуризация.</p>
+  </header>
+
+  <section class="block reveal">
+    <div class="block-head"><span class="num">01</span><h2>Ключевые метрики на 01.10.2026</h2></div>
+    <p class="hint">Изменение к 01.09.2026: для долей — в процентных пунктах, для сумм — в процентах.</p>
+    <div data-spec="kpi"></div>
+  </section>
+
+  <section class="block reveal">
+    <div class="block-head"><span class="num">02</span><h2>Динамика</h2></div>
+    <div class="card"><div data-spec="dynamics"></div></div>
+  </section>
+
+  <section class="block reveal">
+    <div class="block-head"><span class="num">03</span><h2>Отрасли</h2></div>
+    <p class="hint">Бледные столбцы — 01.09, насыщенные — 01.10. Отрасли отсортированы по размеру портфеля.</p>
+    <div class="card"><div data-spec="sector"></div></div>
+  </section>
+
+  <section class="block reveal">
+    <div class="block-head"><span class="num">04</span><h2>Программы</h2></div>
+    <div class="card"><div data-spec="program"></div></div>
+  </section>
+
+  <div class="grid block">
+    <section class="reveal">
+      <div class="block-head"><span class="num">05</span><h2>Миграция по корзинам просрочки</h2></div>
+      <div class="card"><div data-spec="migration"></div></div>
+    </section>
+    <section class="reveal" style="--delay: 0.12s">
+      <div class="block-head"><span class="num">06</span><h2>Топ-10 групп заёмщиков</h2></div>
+      <p class="hint">Подпись у столбца — остаток в млрд ₸ и доля NPL внутри группы.</p>
+      <div class="card"><div data-spec="top_groups"></div></div>
+    </section>
+  </div>
+
+  <section class="block reveal">
+    <div class="block-head"><span class="num">07</span><h2>Выводы для риск-комитета</h2></div>
+    <div class="findings">
+      <article class="finding reveal">
+        <h3>Снижение NPL держится на «излечениях»</h3>
+        <p>53 кредита из корзины 90+ (<b>15,3 млрд ₸</b>) и 49 из 31–90 (<b>20,2 млрд ₸</b>) за месяц вышли из просрочки без реструктуризации. Перед снижением провизий на 6,85 млрд ₸ — сверить погашения с платёжными данными.</p>
+      </article>
+      <article class="finding reveal" style="--delay: 0.12s">
+        <h3>Ранняя просрочка ускоряется</h3>
+        <p><b>64%</b> кредитов корзины 1–30 ушли в 31–90 (25,3 млрд ₸). В промышленности — крупнейшей отрасли — PAR30 вырос с 8,5% до <b>16,3%</b>. Рост NPL вероятен через 1–2 месяца.</p>
+      </article>
+      <article class="finding reveal" style="--delay: 0.24s">
+        <h3>Проблемный долг в концентрации</h3>
+        <p>Топ-10 групп — 17,1% портфеля. Группа <b>G0003</b> (7,4 млрд ₸) на 63% состоит из NPL — это <b>10% всего NPL</b> портфеля. Нужна индивидуальная оценка.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    <p>Данные: витрина <code>reporting.v_loan_mart</code> (PostgreSQL)</p>
+    <p>Дашборд: спеки Vega-Lite в <code>dashboard/specs</code></p>
+  </footer>
+</main>
+
+<button type="button" class="scroll-top" aria-label="Наверх">
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <path d="M6 14.5 12 8.5l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<script>
+  // После перезагрузки — всегда с начала страницы, иначе браузер вернёт в середину и анимации сработают без прокрутки.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
+  const isStatic = new URLSearchParams(location.search).has('static')
+    || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (isStatic) document.documentElement.classList.add('static');
+
+  const scrollTop = document.querySelector('.scroll-top');
+  const toggleScrollTop = () => scrollTop.classList.toggle('is-visible', window.scrollY > 320);
+  toggleScrollTop();
+  window.addEventListener('scroll', toggleScrollTop, { passive: true });
+  scrollTop.addEventListener('click', () => {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+  });
+
+  const config = {
+    background: null,
+    font: 'IBM Plex Sans, system-ui, sans-serif',
+    view: { stroke: null },
+    axis: {
+      labelColor: '#909aa6', titleColor: '#909aa6', labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500,
+      gridColor: 'rgba(255,255,255,0.05)', domainColor: 'rgba(255,255,255,0.12)', tickColor: 'rgba(255,255,255,0.12)'
+    },
+    legend: { labelColor: '#c4cbd3', titleColor: '#909aa6', labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500, symbolType: 'circle' },
+    title: { color: '#f3f6f8', fontSize: 14, fontWeight: 600, offset: 14 },
+    text: { color: '#f3f6f8' }
+  };
+  const formatLocale = { decimal: ',', thousands: ' ', grouping: [3], currency: ['', ' ₸'] };
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+
+  function grow(view, duration = 1400) {
+    const start = performance.now();
+    const step = async (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      await view.signal('grow', easeOut(t)).runAsync();
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // Спеки в репозитории — десктопные. На узком контейнере подгоняем размеры, раскладку и подписи.
+  function adapt(name, spec, available) {
+    const s = structuredClone(spec);
+    const w = available - 16; // внутренний отступ Vega вокруг графика
+    const narrow = w < 520;
+    if (narrow) s.padding = 0;
+    switch (name) {
+      case 'kpi': {
+        // Сетка карточек всегда занимает всю ширину колонки — как остальные блоки страницы.
+        const cols = available >= 640 ? 4 : 2;
+        const baseGap = available >= 1000 ? 16 : cols === 4 ? 12 : 10;
+        // Ширина карточки — целая (Vega округляет ячейки вверх), остаток уходит в промежутки.
+        const cw = Math.floor((available - baseGap * (cols - 1)) / cols);
+        const gap = (available - cw * cols) / (cols - 1);
+        const wide = cw >= 240;
+        const compact = cw < 200;
+        const x = wide ? 22 : compact ? 14 : 18;
+        const h = wide ? 132 : compact ? 112 : 126;
+        const valueSize = wide ? 30 : Math.min(26, Math.floor((cw - 2 * x) / 7.4));
+        const [bg, bar, label, value, change, base] = s.spec.layer;
+        const place = (layer, y, size) => {
+          Object.assign(layer.encoding, { x: { value: x }, y: { value: y } });
+          layer.mark.fontSize = size;
+        };
+        Object.assign(s, { columns: cols, spacing: gap, padding: 0, bounds: 'flush' });
+        Object.assign(s.spec, { width: cw, height: h });
+        // Обводка целиком внутри ячейки, иначе Vega расширяет сетку на её толщину.
+        Object.assign(bg.encoding, { x: { value: 1 }, x2: { value: cw - 1 }, y: { value: 1 }, y2: { value: h - 1 } });
+        Object.assign(bar.encoding, { x: { value: x }, x2: { value: x + 24 } });
+        if (wide) {
+          place(label, 20, 13);
+          place(value, 42, valueSize);
+          place(change, 88, 14);
+          place(base, 108, 12.5);
+        } else {
+          place(label, 15, 12);
+          place(value, 34, valueSize);
+          place(change, 40 + valueSize, compact ? 12.5 : 13.5);
+          place(base, 60 + valueSize, compact ? 11.5 : 12);
+        }
+        label.mark.limit = base.mark.limit = cw - 2 * x;
+        if (compact) {
+          s.transform.push({ calculate: "datum.label === 'Концентрация топ-10 групп' ? 'Топ-10 групп' : datum.label", as: 'label_short' });
+          label.encoding.text.field = 'label_short';
+        }
+        return s;
+      }
+      case 'dynamics': {
+        if (w >= 980) return s;
+        s.vconcat = s.hconcat;
+        delete s.hconcat;
+        s.spacing = 32;
+        s.resolve = { scale: { x: 'independent', xOffset: 'independent', y: 'independent' } };
+        for (const p of s.vconcat) {
+          Object.assign(p, { width: w - 48, height: narrow ? 200 : 240 });
+          p.encoding.x.axis.labelFontSize = 11;
+          p.layer[2].mark.fontSize = narrow ? 11 : 12;
+          // На узком экране подписи соседних столбцов слипаются — подписываем только последний срез.
+          if (narrow) {
+            p.layer[2].transform = [
+              { joinaggregate: [{ op: 'max', field: 'report_date', as: 'last_date' }] },
+              { filter: 'datum.report_date === datum.last_date' }
+            ];
+          }
+        }
+        s.vconcat[0].encoding.x.axis.labelExpr = "datum.label === 'Концентрация топ-10 групп' ? ['Топ-10', 'групп'] : datum.label === 'Провизии / портфель' ? ['Провизии', '/ портф.'] : split(datum.label, ' ')";
+        return s;
+      }
+      case 'sector':
+      case 'program': {
+        if (w >= 1020) return s;
+        const tiny = w < 260;
+        const labelW = tiny ? 90 : narrow ? 100 : 180;
+        s.vconcat = s.hconcat;
+        delete s.hconcat;
+        s.spacing = 28;
+        for (const [i, p] of s.vconcat.entries()) {
+          p.width = w - labelW - 36 - (i > 0 ? 40 : 0); // справа — место под подпись процента
+          p.height = { step: narrow ? 22 : 17 };
+          p.encoding.y.axis = {
+            labelLimit: labelW, labelPadding: 6, labelFontSize: tiny ? 11 : 12,
+            labelExpr: narrow ? "split(split(datum.label, '|')[1], ' ')" : "split(datum.label, '|')[1]"
+          };
+        }
+        if (narrow) {
+          s.vconcat[0].title.text = 'Стадии риска, млрд ₸';
+          Object.assign(s.vconcat[0].layer[1].encoding.color.legend, {
+            direction: 'vertical',
+            labelExpr: "datum.label === 'Стандартные (до 30)' ? 'До 30 дней' : datum.label"
+          });
+          s.vconcat[1].encoding.color.legend.direction = 'vertical';
+          for (const p of s.vconcat) p.layer[1].encoding.x.axis.tickCount = 3;
+        }
+        return s;
+      }
+      case 'migration': {
+        if (w >= 510) return s; // десктопная спека занимает ~517 px
+        Object.assign(s, { width: w - 64, height: 4 * 48 });
+        // Сумма остаётся в тултипе: в узкую ячейку помещается только количество кредитов.
+        s.transform.find((t) => t.as === 'cell_text').calculate = "'' + round(datum.loans * grow)";
+        Object.assign(s.layer[1].mark, { fontSize: 12 });
+        s.encoding.x.title = 'Корзина на 01.10, кредитов';
+        s.layer[0].encoding.color.legend.gradientLength = Math.min(200, w - 100);
+        return s;
+      }
+      case 'top_groups': {
+        if (w >= 480) return s; // десктопная спека занимает ~482 px
+        s.width = w - 144;
+        s.transform.find((t) => t.as === 'bar_text').calculate = "format(datum.group_bn * grow, ',.1f') + ' · ' + format(datum.npl_share, '.0%')";
+        s.layer[2].mark.fontSize = 11.5;
+        s.layer[1].encoding.color.legend.gradientLength = Math.min(200, w - 100);
+        return s;
+      }
+    }
+    return s;
+  }
+
+  const specCache = {};
+
+  // Ширину берём у родителя: vega-embed делает контейнер inline-block, и он растягивается под старый график.
+  function availableWidth(el) {
+    const box = el.parentElement;
+    const style = getComputedStyle(box);
+    return Math.floor(box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+  }
+
+  async function embed(el) {
+    const name = el.dataset.spec;
+    specCache[name] ??= fetch(`specs/${name}.json`).then((r) => r.json());
+    const width = availableWidth(el);
+    const spec = adapt(name, await specCache[name], width);
+    el.view?.finalize();
+    const { view } = await vegaEmbed(el, spec, {
+      actions: false, renderer: 'svg', config, formatLocale, tooltip: { theme: 'dark' }
+    });
+    el.view = view;
+    el.renderedWidth = width;
+    if (!isStatic && !el.grown) await view.signal('grow', 0).runAsync();
+    return view;
+  }
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add('is-visible');
+      revealObserver.unobserve(entry.target);
+    }
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+  const chartObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      chartObserver.unobserve(entry.target);
+      entry.target.grown = true;
+      entry.target.viewReady.then((view) => view && setTimeout(() => grow(view), 120));
+    }
+  }, { threshold: 0.2 });
+
+  document.fonts.ready.then(async () => {
+    const charts = [...document.querySelectorAll('[data-spec]')];
+    const render = (el) => {
+      el.viewReady = embed(el).catch((err) => { el.textContent = `Не удалось загрузить ${el.dataset.spec}: ${err}`; });
+    };
+    charts.forEach(render);
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        charts.filter((el) => Math.abs(availableWidth(el) - el.renderedWidth) > 24).forEach(render);
+      }, 200);
+    });
+    if (isStatic) return;
+    // Наблюдение — только после отрисовки: до неё страница короткая и все блоки сразу «видны».
+    await Promise.all(charts.map((el) => el.viewReady));
+    charts.forEach((el) => chartObserver.observe(el));
+    document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+  });
+</script>
+</body>
+</html>

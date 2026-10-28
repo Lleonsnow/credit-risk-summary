@@ -1,0 +1,10 @@
+[{"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"0","bucket_from_order":1,"bucket_to":"0","bucket_to_order":1,"loans":1560,"portfolio_kzt_from":381738627703.265500}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"0","bucket_from_order":1,"bucket_to":"1-30","bucket_to_order":2,"loans":73,"portfolio_kzt_from":18891433678.595000}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"1-30","bucket_from_order":2,"bucket_to":"0","bucket_to_order":1,"loans":45,"portfolio_kzt_from":12187068345.808000}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"1-30","bucket_from_order":2,"bucket_to":"31-90","bucket_to_order":3,"loans":81,"portfolio_kzt_from":25311593898.124500}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"31-90","bucket_from_order":3,"bucket_to":"0","bucket_to_order":1,"loans":49,"portfolio_kzt_from":20225416749.303000}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"31-90","bucket_from_order":3,"bucket_to":"31-90","bucket_to_order":3,"loans":24,"portfolio_kzt_from":3997398266.325000}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"31-90","bucket_from_order":3,"bucket_to":"90+","bucket_to_order":4,"loans":28,"portfolio_kzt_from":4703855446.808000}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"90+","bucket_from_order":4,"bucket_to":"0","bucket_to_order":1,"loans":53,"portfolio_kzt_from":15291278044.132500}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"90+","bucket_from_order":4,"bucket_to":"90+","bucket_to_order":4,"loans":56,"portfolio_kzt_from":14743115456.429000}, 
+ {"date_from":"2026-09-01","date_to":"2026-10-01","bucket_from":"90+","bucket_from_order":4,"bucket_to":"Списан","bucket_to_order":5,"loans":6,"portfolio_kzt_from":1063441105.782500}]

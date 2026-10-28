@@ -1,0 +1,272 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Динамика метрик риска и объёмов между срезами",
+  "params": [
+    {
+      "name": "grow",
+      "value": 1
+    }
+  ],
+  "data": {
+    "url": "data/metrics_long.json"
+  },
+  "transform": [
+    {
+      "calculate": "substring(datum.report_date, 8, 10) + '.' + substring(datum.report_date, 5, 7) + '.' + substring(datum.report_date, 0, 4)",
+      "as": "date_label"
+    },
+    {
+      "calculate": "datum.unit === 'kzt' ? datum.value / 1e9 : datum.value",
+      "as": "value_display"
+    },
+    {
+      "calculate": "datum.value_display * grow",
+      "as": "value_anim"
+    }
+  ],
+  "hconcat": [
+    {
+      "title": {
+        "text": "Показатели риска, доля портфеля",
+        "anchor": "start"
+      },
+      "transform": [
+        {
+          "filter": "datum.unit === 'share'"
+        }
+      ],
+      "width": 580,
+      "height": 280,
+      "encoding": {
+        "x": {
+          "field": "label",
+          "type": "nominal",
+          "sort": {
+            "field": "metric_order",
+            "op": "min"
+          },
+          "title": null,
+          "axis": {
+            "labelAngle": 0,
+            "labelExpr": "split(datum.label, ' ')",
+            "labelLimit": 200,
+            "labelPadding": 8
+          }
+        },
+        "xOffset": {
+          "field": "date_label",
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          }
+        },
+        "color": {
+          "field": "date_label",
+          "title": null,
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          },
+          "scale": {
+            "range": [
+              "#5b6472",
+              "#3dceb4"
+            ]
+          },
+          "legend": {
+            "orient": "top",
+            "direction": "horizontal"
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "opacity": 0
+          },
+          "encoding": {
+            "y": {
+              "field": "value_display",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "format": ".0%",
+                "tickCount": 5
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "cornerRadiusTopLeft": 4,
+            "cornerRadiusTopRight": 4
+          },
+          "encoding": {
+            "y": {
+              "field": "value_anim",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "format": ".0%",
+                "tickCount": 5
+              }
+            },
+            "tooltip": [
+              {
+                "field": "label",
+                "title": "Метрика"
+              },
+              {
+                "field": "date_label",
+                "title": "Срез"
+              },
+              {
+                "field": "value",
+                "title": "Значение",
+                "format": ".2%"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "dy": -8,
+            "fontSize": 12,
+            "fontWeight": 500
+          },
+          "encoding": {
+            "y": {
+              "field": "value_anim",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "value_anim",
+              "format": ".1%"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "text": "Портфель и провизии, млрд ₸",
+        "anchor": "start"
+      },
+      "transform": [
+        {
+          "filter": "datum.unit === 'kzt'"
+        }
+      ],
+      "width": 280,
+      "height": 280,
+      "encoding": {
+        "x": {
+          "field": "label",
+          "type": "nominal",
+          "sort": {
+            "field": "metric_order",
+            "op": "min"
+          },
+          "title": null,
+          "axis": {
+            "labelAngle": 0,
+            "labelPadding": 8
+          }
+        },
+        "xOffset": {
+          "field": "date_label",
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          }
+        },
+        "color": {
+          "field": "date_label",
+          "title": null,
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          },
+          "scale": {
+            "range": [
+              "#5b6472",
+              "#3dceb4"
+            ]
+          },
+          "legend": null
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "opacity": 0
+          },
+          "encoding": {
+            "y": {
+              "field": "value_display",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "tickCount": 5
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "cornerRadiusTopLeft": 4,
+            "cornerRadiusTopRight": 4
+          },
+          "encoding": {
+            "y": {
+              "field": "value_anim",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "tickCount": 5
+              }
+            },
+            "tooltip": [
+              {
+                "field": "label",
+                "title": "Метрика"
+              },
+              {
+                "field": "date_label",
+                "title": "Срез"
+              },
+              {
+                "field": "value_display",
+                "title": "млрд ₸",
+                "format": ",.2f"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "dy": -8,
+            "fontSize": 12,
+            "fontWeight": 500
+          },
+          "encoding": {
+            "y": {
+              "field": "value_anim",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "value_anim",
+              "format": ",.1f"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

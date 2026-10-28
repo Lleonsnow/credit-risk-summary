@@ -1,0 +1,206 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Ключевые метрики на последнюю дату с изменением к первой",
+  "params": [
+    {
+      "name": "grow",
+      "value": 1
+    }
+  ],
+  "data": {
+    "url": "data/metrics_change.json"
+  },
+  "transform": [
+    {
+      "calculate": "datum.unit === 'kzt' ? format(datum.value_current * grow / 1e9, ',.1f') + ' млрд ₸' : datum.unit === 'share' ? format(datum.value_current * grow, '.2%') : format(round(datum.value_current * grow), ',d')",
+      "as": "value_text"
+    },
+    {
+      "calculate": "datum.unit === 'kzt' ? format(datum.value_base / 1e9, ',.1f') + ' млрд ₸' : datum.unit === 'share' ? format(datum.value_base, '.2%') : format(datum.value_base, ',d')",
+      "as": "base_text"
+    },
+    {
+      "calculate": "datum.unit === 'share' ? (datum.change_abs >= 0 ? '▲ +' : '▼ ') + format(datum.change_abs * 100, '.2f') + ' п.п.' : datum.unit === 'kzt' ? (datum.change_rel >= 0 ? '▲ ' : '▼ ') + format(datum.change_rel, '+.1%') : (datum.change_abs >= 0 ? '▲ ' : '▼ ') + format(datum.change_abs, '+d')",
+      "as": "change_text"
+    },
+    {
+      "calculate": "datum.unit !== 'share' ? 'neutral' : datum.change_abs > 0 ? 'worse' : 'better'",
+      "as": "direction"
+    },
+    {
+      "calculate": "'01.09: ' + datum.base_text",
+      "as": "base_line"
+    }
+  ],
+  "facet": {
+    "field": "label",
+    "type": "nominal",
+    "sort": {
+      "field": "metric_order",
+      "op": "min"
+    },
+    "header": {
+      "title": null,
+      "labels": false,
+      "labelFontSize": 0,
+      "labelPadding": 0,
+      "labelExpr": "''"
+    }
+  },
+  "columns": 4,
+  "spacing": 16,
+  "spec": {
+    "width": 262,
+    "height": 132,
+    "layer": [
+      {
+        "mark": {
+          "type": "rect",
+          "cornerRadius": 14,
+          "fill": "#0e1115",
+          "stroke": "#1d2127",
+          "strokeWidth": 1
+        },
+        "encoding": {
+          "x": {
+            "value": 0
+          },
+          "x2": {
+            "value": 262
+          },
+          "y": {
+            "value": 0
+          },
+          "y2": {
+            "value": 132
+          }
+        }
+      },
+      {
+        "mark": {
+          "type": "rect",
+          "cornerRadius": 2,
+          "fill": "#3dceb4"
+        },
+        "encoding": {
+          "x": {
+            "value": 22
+          },
+          "x2": {
+            "value": 46
+          },
+          "y": {
+            "value": 0
+          },
+          "y2": {
+            "value": 3
+          }
+        }
+      },
+      {
+        "mark": {
+          "type": "text",
+          "align": "left",
+          "baseline": "top",
+          "fontSize": 13,
+          "color": "#909aa6"
+        },
+        "encoding": {
+          "x": {
+            "value": 22
+          },
+          "y": {
+            "value": 20
+          },
+          "text": {
+            "field": "label"
+          }
+        }
+      },
+      {
+        "mark": {
+          "type": "text",
+          "align": "left",
+          "baseline": "top",
+          "fontSize": 30,
+          "fontWeight": 600,
+          "color": "#f3f6f8",
+          "font": "Syne, IBM Plex Sans, sans-serif"
+        },
+        "encoding": {
+          "x": {
+            "value": 22
+          },
+          "y": {
+            "value": 42
+          },
+          "text": {
+            "field": "value_text"
+          }
+        }
+      },
+      {
+        "mark": {
+          "type": "text",
+          "align": "left",
+          "baseline": "top",
+          "fontSize": 14,
+          "fontWeight": 600,
+          "opacity": {
+            "expr": "grow"
+          }
+        },
+        "encoding": {
+          "x": {
+            "value": 22
+          },
+          "y": {
+            "value": 88
+          },
+          "text": {
+            "field": "change_text"
+          },
+          "color": {
+            "field": "direction",
+            "scale": {
+              "domain": [
+                "better",
+                "worse",
+                "neutral"
+              ],
+              "range": [
+                "#3dceb4",
+                "#f47b7e",
+                "#909aa6"
+              ]
+            },
+            "legend": null
+          }
+        }
+      },
+      {
+        "mark": {
+          "type": "text",
+          "align": "left",
+          "baseline": "top",
+          "fontSize": 12.5,
+          "color": "#6c7684",
+          "opacity": {
+            "expr": "grow"
+          }
+        },
+        "encoding": {
+          "x": {
+            "value": 22
+          },
+          "y": {
+            "value": 108
+          },
+          "text": {
+            "field": "base_line"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Миграция кредитов между корзинами просрочки 01.09 → 01.10",
+  "params": [
+    {
+      "name": "grow",
+      "value": 1
+    }
+  ],
+  "data": {
+    "url": "data/dpd_migration.json"
+  },
+  "transform": [
+    {
+      "calculate": "datum.portfolio_kzt_from / 1e9",
+      "as": "portfolio_bn"
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "sum",
+          "field": "loans",
+          "as": "from_loans"
+        }
+      ],
+      "groupby": [
+        "bucket_from"
+      ]
+    },
+    {
+      "calculate": "datum.loans / datum.from_loans",
+      "as": "loan_share"
+    },
+    {
+      "calculate": "[round(datum.loans * grow) + ' шт', format(datum.portfolio_bn * grow, ',.1f') + ' млрд ₸']",
+      "as": "cell_text"
+    }
+  ],
+  "width": 440,
+  "height": 300,
+  "encoding": {
+    "x": {
+      "field": "bucket_to",
+      "type": "ordinal",
+      "title": "Корзина на 01.10",
+      "sort": [
+        "0",
+        "1-30",
+        "31-90",
+        "90+",
+        "Списан"
+      ],
+      "scale": {
+        "domain": [
+          "0",
+          "1-30",
+          "31-90",
+          "90+",
+          "Списан"
+        ]
+      },
+      "axis": {
+        "orient": "top",
+        "labelAngle": 0,
+        "domain": false,
+        "ticks": false
+      }
+    },
+    "y": {
+      "field": "bucket_from",
+      "type": "ordinal",
+      "title": "Корзина на 01.09",
+      "sort": [
+        "0",
+        "1-30",
+        "31-90",
+        "90+"
+      ],
+      "axis": {
+        "domain": false,
+        "ticks": false
+      }
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "rect",
+        "cornerRadius": 6,
+        "stroke": "#0c0e12",
+        "strokeWidth": 3,
+        "opacity": {
+          "expr": "0.15 + 0.85 * grow"
+        }
+      },
+      "encoding": {
+        "color": {
+          "field": "loan_share",
+          "type": "quantitative",
+          "title": "Доля кредитов строки",
+          "scale": {
+            "domain": [
+              0,
+              1
+            ],
+            "range": [
+              "#141a20",
+              "#3dceb4"
+            ]
+          },
+          "legend": {
+            "format": ".0%",
+            "orient": "bottom",
+            "direction": "horizontal",
+            "gradientLength": 200
+          }
+        },
+        "tooltip": [
+          {
+            "field": "bucket_from",
+            "title": "Было"
+          },
+          {
+            "field": "bucket_to",
+            "title": "Стало"
+          },
+          {
+            "field": "loans",
+            "title": "Кредитов"
+          },
+          {
+            "field": "loan_share",
+            "title": "Доля строки",
+            "format": ".1%"
+          },
+          {
+            "field": "portfolio_bn",
+            "title": "Остаток на 01.09, млрд ₸",
+            "format": ",.2f"
+          }
+        ]
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "fontSize": 12,
+        "lineHeight": 16,
+        "fontWeight": 500
+      },
+      "encoding": {
+        "text": {
+          "field": "cell_text"
+        },
+        "color": {
+          "condition": {
+            "test": "datum.loan_share > 0.55",
+            "value": "#06221c"
+          },
+          "value": "#f3f6f8"
+        }
+      }
+    }
+  ]
+}

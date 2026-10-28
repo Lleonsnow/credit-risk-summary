@@ -1,0 +1,161 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Десять крупнейших групп связанных заёмщиков на последний срез",
+  "params": [
+    {
+      "name": "grow",
+      "value": 1
+    }
+  ],
+  "data": {
+    "url": "data/top_groups.json"
+  },
+  "transform": [
+    {
+      "joinaggregate": [
+        {
+          "op": "max",
+          "field": "report_date",
+          "as": "last_date"
+        }
+      ]
+    },
+    {
+      "filter": "datum.report_date === datum.last_date"
+    },
+    {
+      "calculate": "datum.group_kzt / 1e9",
+      "as": "group_bn"
+    },
+    {
+      "calculate": "datum.portfolio_share * grow",
+      "as": "anim"
+    },
+    {
+      "calculate": "format(datum.group_bn * grow, ',.1f') + ' млрд ₸ · NPL ' + format(datum.npl_share, '.0%')",
+      "as": "bar_text"
+    }
+  ],
+  "width": 330,
+  "height": {
+    "step": 26
+  },
+  "encoding": {
+    "y": {
+      "field": "group_id",
+      "type": "nominal",
+      "title": null,
+      "sort": {
+        "field": "group_rank",
+        "op": "min"
+      },
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelPadding": 8
+      }
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "bar",
+        "opacity": 0
+      },
+      "encoding": {
+        "x": {
+          "field": "portfolio_share",
+          "type": "quantitative",
+          "title": "Доля портфеля на 01.10",
+          "axis": {
+            "format": ".1%",
+            "tickCount": 4
+          }
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "bar",
+        "cornerRadiusEnd": 4
+      },
+      "encoding": {
+        "x": {
+          "field": "anim",
+          "type": "quantitative",
+          "title": "Доля портфеля на 01.10",
+          "axis": {
+            "format": ".1%",
+            "tickCount": 4
+          }
+        },
+        "color": {
+          "field": "npl_share",
+          "type": "quantitative",
+          "title": "NPL в группе",
+          "scale": {
+            "domain": [
+              0,
+              0.7
+            ],
+            "range": [
+              "#2a3038",
+              "#f47b7e"
+            ]
+          },
+          "legend": {
+            "format": ".0%",
+            "orient": "bottom",
+            "direction": "horizontal",
+            "gradientLength": 200
+          }
+        },
+        "tooltip": [
+          {
+            "field": "group_id",
+            "title": "Группа"
+          },
+          {
+            "field": "loans",
+            "title": "Кредитов"
+          },
+          {
+            "field": "group_bn",
+            "title": "млрд ₸",
+            "format": ",.2f"
+          },
+          {
+            "field": "portfolio_share",
+            "title": "Доля портфеля",
+            "format": ".2%"
+          },
+          {
+            "field": "npl_share",
+            "title": "Доля NPL в группе",
+            "format": ".1%"
+          }
+        ]
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 6,
+        "fontSize": 12
+      },
+      "encoding": {
+        "x": {
+          "field": "anim",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "bar_text"
+        },
+        "color": {
+          "value": "#c4cbd3"
+        }
+      }
+    }
+  ]
+}

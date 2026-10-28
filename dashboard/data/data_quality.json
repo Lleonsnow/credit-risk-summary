@@ -1,0 +1,10 @@
+[{"check_name":"duplicate_rows","report_date":"2026-09-01","rows_affected":30,"note":"Полные дубли строк в raw.portfolio, удалены в витрине"}, 
+ {"check_name":"duplicate_rows","report_date":"2026-10-01","rows_affected":30,"note":"Полные дубли строк в raw.portfolio, удалены в витрине"}, 
+ {"check_name":"fx_rate_not_on_report_date","report_date":"2026-09-01","rows_affected":0,"note":"Валюты без курса ровно на дату среза"}, 
+ {"check_name":"fx_rate_not_on_report_date","report_date":"2026-10-01","rows_affected":0,"note":"Валюты без курса ровно на дату среза"}, 
+ {"check_name":"past_maturity_no_dpd","report_date":"2026-09-01","rows_affected":355,"note":"Срок погашения прошёл, а просрочки нет; оставлены как есть"}, 
+ {"check_name":"past_maturity_no_dpd","report_date":"2026-10-01","rows_affected":375,"note":"Срок погашения прошёл, а просрочки нет; оставлены как есть"}, 
+ {"check_name":"write_off_reversed","report_date":"2026-09-01","rows_affected":0,"note":"Кредит был списан ранее, а в срезе written_off = 0; считается списанным"}, 
+ {"check_name":"write_off_reversed","report_date":"2026-10-01","rows_affected":23,"note":"Кредит был списан ранее, а в срезе written_off = 0; считается списанным"}, 
+ {"check_name":"written_off_excluded","report_date":"2026-09-01","rows_affected":25,"note":"Списанные кредиты, исключены из портфеля"}, 
+ {"check_name":"written_off_excluded","report_date":"2026-10-01","rows_affected":31,"note":"Списанные кредиты, исключены из портфеля"}]

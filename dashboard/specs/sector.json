@@ -1,0 +1,481 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Портфель и риск в разрезе: отрасль",
+  "params": [
+    {
+      "name": "grow",
+      "value": 1
+    }
+  ],
+  "hconcat": [
+    {
+      "title": {
+        "text": "Структура по стадиям риска, млрд ₸",
+        "anchor": "start"
+      },
+      "data": {
+        "url": "data/breakdown_stage.json"
+      },
+      "transform": [
+        {
+          "filter": "datum.dimension === 'sector'"
+        },
+        {
+          "joinaggregate": [
+            {
+              "op": "sum",
+              "field": "portfolio_kzt",
+              "as": "dim_total"
+            }
+          ],
+          "groupby": [
+            "dimension_value"
+          ]
+        },
+        {
+          "calculate": "(1e15 - datum.dim_total) + '|' + datum.dimension_value",
+          "as": "dim_sort"
+        },
+        {
+          "calculate": "substring(datum.report_date, 8, 10) + '.' + substring(datum.report_date, 5, 7) + '.' + substring(datum.report_date, 0, 4)",
+          "as": "date_label"
+        },
+        {
+          "calculate": "datum.portfolio_kzt / 1e9",
+          "as": "portfolio_bn"
+        },
+        {
+          "calculate": "datum.portfolio_bn * grow",
+          "as": "anim"
+        },
+        {
+          "calculate": "indexof([\"Стандартные (до 30)\", \"Просрочка 31-90\", \"NPL\"], datum.risk_stage)",
+          "as": "stage_order"
+        }
+      ],
+      "width": 330,
+      "height": {
+        "step": 17
+      },
+      "encoding": {
+        "y": {
+          "field": "dim_sort",
+          "type": "nominal",
+          "title": null,
+          "axis": {
+            "labelLimit": 220,
+            "labelPadding": 8,
+            "labelExpr": "split(datum.label, '|')[1]"
+          }
+        },
+        "yOffset": {
+          "field": "date_label",
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          }
+        },
+        "order": {
+          "field": "stage_order"
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "opacity": 0
+          },
+          "encoding": {
+            "x": {
+              "field": "portfolio_bn",
+              "type": "quantitative",
+              "stack": "zero",
+              "title": null,
+              "axis": {
+                "tickCount": 5
+              }
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar"
+          },
+          "encoding": {
+            "x": {
+              "field": "anim",
+              "type": "quantitative",
+              "stack": "zero",
+              "title": null,
+              "axis": {
+                "tickCount": 5
+              }
+            },
+            "color": {
+              "field": "risk_stage",
+              "title": null,
+              "sort": [
+                "Стандартные (до 30)",
+                "Просрочка 31-90",
+                "NPL"
+              ],
+              "scale": {
+                "domain": [
+                  "Стандартные (до 30)",
+                  "Просрочка 31-90",
+                  "NPL"
+                ],
+                "range": [
+                  "#2f8f80",
+                  "#f2b85f",
+                  "#f47b7e"
+                ]
+              },
+              "legend": {
+                "orient": "bottom",
+                "direction": "horizontal"
+              }
+            },
+            "opacity": {
+              "field": "date_label",
+              "sort": {
+                "field": "report_date",
+                "op": "min"
+              },
+              "scale": {
+                "range": [
+                  0.45,
+                  1
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "dimension_value",
+                "title": "Значение"
+              },
+              {
+                "field": "date_label",
+                "title": "Срез"
+              },
+              {
+                "field": "risk_stage",
+                "title": "Стадия"
+              },
+              {
+                "field": "portfolio_bn",
+                "title": "млрд ₸",
+                "format": ",.2f"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "text": "PAR30",
+        "anchor": "start"
+      },
+      "data": {
+        "url": "data/breakdown.json"
+      },
+      "transform": [
+        {
+          "filter": "datum.dimension === 'sector'"
+        },
+        {
+          "joinaggregate": [
+            {
+              "op": "sum",
+              "field": "portfolio_kzt",
+              "as": "dim_total"
+            }
+          ],
+          "groupby": [
+            "dimension_value"
+          ]
+        },
+        {
+          "calculate": "(1e15 - datum.dim_total) + '|' + datum.dimension_value",
+          "as": "dim_sort"
+        },
+        {
+          "calculate": "substring(datum.report_date, 8, 10) + '.' + substring(datum.report_date, 5, 7) + '.' + substring(datum.report_date, 0, 4)",
+          "as": "date_label"
+        },
+        {
+          "calculate": "datum.par30_share * grow",
+          "as": "anim"
+        }
+      ],
+      "width": 180,
+      "height": {
+        "step": 17
+      },
+      "encoding": {
+        "y": {
+          "field": "dim_sort",
+          "type": "nominal",
+          "title": null,
+          "axis": null
+        },
+        "yOffset": {
+          "field": "date_label",
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          }
+        },
+        "color": {
+          "field": "date_label",
+          "title": null,
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          },
+          "scale": {
+            "range": [
+              "#5b6472",
+              "#3dceb4"
+            ]
+          },
+          "legend": {
+            "orient": "bottom",
+            "direction": "horizontal"
+          }
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "opacity": 0
+          },
+          "encoding": {
+            "x": {
+              "field": "par30_share",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "format": ".0%",
+                "tickCount": 4
+              },
+              "stack": null
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "cornerRadiusEnd": 3
+          },
+          "encoding": {
+            "x": {
+              "field": "anim",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "format": ".0%",
+                "tickCount": 4
+              },
+              "stack": null
+            },
+            "tooltip": [
+              {
+                "field": "dimension_value",
+                "title": "Значение"
+              },
+              {
+                "field": "date_label",
+                "title": "Срез"
+              },
+              {
+                "field": "par30_share",
+                "title": "PAR30",
+                "format": ".2%"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "dx": 4,
+            "fontSize": 12
+          },
+          "encoding": {
+            "x": {
+              "field": "anim",
+              "type": "quantitative",
+              "stack": null
+            },
+            "text": {
+              "field": "anim",
+              "format": ".1%"
+            },
+            "color": {
+              "value": "#c4cbd3"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "text": "NPL",
+        "anchor": "start"
+      },
+      "data": {
+        "url": "data/breakdown.json"
+      },
+      "transform": [
+        {
+          "filter": "datum.dimension === 'sector'"
+        },
+        {
+          "joinaggregate": [
+            {
+              "op": "sum",
+              "field": "portfolio_kzt",
+              "as": "dim_total"
+            }
+          ],
+          "groupby": [
+            "dimension_value"
+          ]
+        },
+        {
+          "calculate": "(1e15 - datum.dim_total) + '|' + datum.dimension_value",
+          "as": "dim_sort"
+        },
+        {
+          "calculate": "substring(datum.report_date, 8, 10) + '.' + substring(datum.report_date, 5, 7) + '.' + substring(datum.report_date, 0, 4)",
+          "as": "date_label"
+        },
+        {
+          "calculate": "datum.npl_share * grow",
+          "as": "anim"
+        }
+      ],
+      "width": 180,
+      "height": {
+        "step": 17
+      },
+      "encoding": {
+        "y": {
+          "field": "dim_sort",
+          "type": "nominal",
+          "title": null,
+          "axis": null
+        },
+        "yOffset": {
+          "field": "date_label",
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          }
+        },
+        "color": {
+          "field": "date_label",
+          "title": null,
+          "sort": {
+            "field": "report_date",
+            "op": "min"
+          },
+          "scale": {
+            "range": [
+              "#5b6472",
+              "#3dceb4"
+            ]
+          },
+          "legend": null
+        }
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "opacity": 0
+          },
+          "encoding": {
+            "x": {
+              "field": "npl_share",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "format": ".0%",
+                "tickCount": 4
+              },
+              "stack": null
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "cornerRadiusEnd": 3
+          },
+          "encoding": {
+            "x": {
+              "field": "anim",
+              "type": "quantitative",
+              "title": null,
+              "axis": {
+                "format": ".0%",
+                "tickCount": 4
+              },
+              "stack": null
+            },
+            "tooltip": [
+              {
+                "field": "dimension_value",
+                "title": "Значение"
+              },
+              {
+                "field": "date_label",
+                "title": "Срез"
+              },
+              {
+                "field": "npl_share",
+                "title": "NPL",
+                "format": ".2%"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "dx": 4,
+            "fontSize": 12
+          },
+          "encoding": {
+            "x": {
+              "field": "anim",
+              "type": "quantitative",
+              "stack": null
+            },
+            "text": {
+              "field": "anim",
+              "format": ".1%"
+            },
+            "color": {
+              "value": "#c4cbd3"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "spacing": 28,
+  "resolve": {
+    "scale": {
+      "color": "independent",
+      "opacity": "independent"
+    }
+  }
+}
