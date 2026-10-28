@@ -1,0 +1,108 @@
+# Семантическая модель кредитного портфеля поверх очищенной витрины.
+# Одна строка витрины = кредит на дату среза; списанные кредиты и дубли уже исключены.
+# Доли (PAR30, PAR90, NPL, концентрация) — отношения мер, например par30_kzt / portfolio_kzt;
+# готовые значения на обе даты — во вьюхе reporting.v_metrics_by_date.
+
+model: loan_portfolio
+source: reporting.v_loan_mart
+
+dimensions:
+  - name: report_date
+    column: report_date
+    type: date
+    label: Дата среза
+  - name: loan_id
+    column: loan_id
+    type: string
+    label: Кредит
+  - name: borrower_id
+    column: borrower_id
+    type: string
+    label: Заёмщик
+  - name: group_id
+    column: group_id
+    type: string
+    label: Группа связанных заёмщиков
+  - name: sector
+    column: sector
+    type: string
+    label: Отрасль
+  - name: program
+    column: program
+    type: string
+    label: Программа
+  - name: currency
+    column: currency
+    type: string
+    label: Валюта кредита
+  - name: dpd_bucket
+    column: dpd_bucket
+    type: string
+    label: Корзина просрочки
+  - name: risk_stage
+    column: risk_stage
+    type: string
+    label: Стадия риска
+  - name: is_restructured
+    column: is_restructured
+    type: boolean
+    label: Реструктуризирован
+  - name: is_npl
+    column: is_npl
+    type: boolean
+    label: NPL
+  - name: issue_date
+    column: issue_date
+    type: date
+    label: Дата выдачи
+  - name: maturity_date
+    column: maturity_date
+    type: date
+    label: Дата погашения
+
+measures:
+  - name: portfolio_kzt
+    column: principal_kzt
+    type: sum
+    format: "#,##0 ₸"
+    label: Портфель, ₸
+  - name: par30_kzt
+    column: par30_kzt
+    type: sum
+    format: "#,##0 ₸"
+    label: Портфель с просрочкой > 30 дней, ₸
+  - name: par90_kzt
+    column: par90_kzt
+    type: sum
+    format: "#,##0 ₸"
+    label: Портфель с просрочкой > 90 дней, ₸
+  - name: npl_kzt
+    column: npl_kzt
+    type: sum
+    format: "#,##0 ₸"
+    label: NPL, ₸
+  - name: provision_kzt
+    column: provision_kzt
+    type: sum
+    format: "#,##0 ₸"
+    label: Провизии, ₸
+  - name: principal_original
+    column: principal_outstanding
+    type: sum
+    format: "#,##0.00"
+    label: Остаток в валюте кредита (суммировать только в разрезе валюты)
+  - name: loans
+    column: loan_id
+    type: count
+    format: "#,##0"
+    label: Количество кредитов
+  - name: avg_principal_kzt
+    column: principal_kzt
+    type: avg
+    format: "#,##0 ₸"
+    label: Средний остаток кредита, ₸
+  - name: avg_days_past_due
+    column: days_past_due
+    type: avg
+    format: "#,##0.0"
+    label: Средняя просрочка, дней
